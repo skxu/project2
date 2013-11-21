@@ -65,15 +65,16 @@ class Sender(BasicSender.BasicSender):
         while len(self.window_buffer) < self.WINDOW_SIZE and not self.done:
             next_msg = self.infile.read(self.PACKET_SIZE)
             msg_type = 'data'
-            #print "nextmsg: %s" % next_msg[0:10]
+            print "nextmsg: %s" % next_msg[0:10]
             if next_msg == "":
                 msg_type = 'end'
                 self.done = True
-                self.last = seqno_to_send
+                self.last = seqno_to_send + 1
             packet = self.make_packet(msg_type,seqno_to_send,msg)
             self.window_buffer.append(packet)
-            #print "added packet to buffer, seqno: %s" % seqno_to_send
-            #print "packet type is %s" % msg_type
+            print "added packet to buffer, seqno: %s" % seqno_to_send
+            print "packet type is %s" % msg_type
+            print msg[0:20]
             msg = next_msg
             seqno_to_send += 1
         
@@ -123,7 +124,7 @@ class Sender(BasicSender.BasicSender):
                 if self.dup_counter >= 3:
                     self.send(self.window_buffer[0])
         
-        self.infile.close()
+        #self.infile.close()
 
 
 
@@ -147,10 +148,12 @@ class Sender(BasicSender.BasicSender):
 
     def handle_new_ack(self, ack):
         ack_count = int(self.split_packet(ack)[1])
-        if ack_count == self.last:
+        if ack_count == self.last and self.last != -1:
+            print "DONEEEEEEE"
             self.done_ack = True
-        #print "ack received: %s" % ack_count
+        print "ack received: %s" % ack_count
         #print "seqno: %s" % self.seqno
+        print "lastno: %s" % self.last
         for i in range(self.seqno, ack_count):
             if len(self.window_buffer) == 0:
                 break
